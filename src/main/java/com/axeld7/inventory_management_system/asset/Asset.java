@@ -2,7 +2,8 @@ package com.axeld7.inventory_management_system.asset;
 
 import java.time.Instant;
 
-import org.hibernate.annotations.CreationTimestamp;
+
+import com.axeld7.inventory_management_system.common.BaseAuditEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +24,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Asset {
+public class Asset extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id")
@@ -40,10 +41,6 @@ public class Asset {
 
     @Column(name="description")
     private String description;
-
-    @CreationTimestamp
-    @Column(name="created_at", nullable=false)
-    private Instant createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name="status", nullable=false)

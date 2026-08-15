@@ -1,12 +1,15 @@
 package com.axeld7.inventory_management_system.asset;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+
 @Repository
-public interface AssetRepository extends JpaRepository<Asset, Long> {
+public interface AssetLogRepository extends JpaRepository<AssetLog, Long>{
+    
+    List<AssetLog> findByAssetIdOrderByCreatedAtDesc(Long assetId);
 
-  Boolean existsByAssetTag(String assetTag);
 
-  Boolean existsByAssetTagAndIdNot(String assetTag, Long id);
 }

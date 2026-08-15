@@ -5,7 +5,11 @@ import com.axeld7.inventory_management_system.asset.dto.CreateAssetRequestDTO;
 import com.axeld7.inventory_management_system.asset.dto.UpdateAssetRequestDTO;
 import com.axeld7.inventory_management_system.exception.DuplicateResourceException;
 import com.axeld7.inventory_management_system.exception.ResourceNotFoundException;
+import com.axeld7.inventory_management_system.user.User;
+import com.axeld7.inventory_management_system.user.UserRepository;
+
 import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetService {
 
   private final AssetRepository assetRepository;
+  private final AssetLogRepository logRepository;
 
   @Transactional(readOnly = true)
   public AssetResponseDTO getAssetById(Long id) {
@@ -26,12 +31,13 @@ public class AssetService {
   }
 
   @Transactional
-  public AssetResponseDTO createAsset(CreateAssetRequestDTO request) {
+  public AssetResponseDTO createAsset(CreateAssetRequestDTO request, User employee) {
 
     if (assetRepository.existsByAssetTag(request.getAssetTag())) {
       throw new DuplicateResourceException(
           "Asset tag " + request.getAssetTag() + " is already assigned to another asset.");
     }
+
 
     Asset asset = new Asset();
     asset.setName(request.getName());
@@ -42,11 +48,19 @@ public class AssetService {
 
     Asset savedAsset = assetRepository.save(asset);
 
+    AssetLog log = new AssetLog();
+    log.setAsset(savedAsset);
+    log.setEmployee(employee);
+    log.setPatron(null);
+    log.setAction(AssetAction.CREATED);
+    log.setNotes("Asset record intialized with tag: " + asset.getAssetTag());
+
+    logRepository.save(log);
+
     return AssetResponseDTO.fromEntity(savedAsset);
   }
 
-  @Transactional
-  public AssetResponseDTO updateAsset(Long id, UpdateAssetRequestDTO request) {
+  public AssetResponseDTO updateAsset(UpdateAssetRequestDTO request, User currentUser, Long id) {
 
     Asset asset =
         assetRepository
@@ -64,6 +78,18 @@ public class AssetService {
     asset.setAssetTag(request.getAssetTag());
     asset.setDescription(request.getDescription());
     asset.setStatus(request.getStatus());
+    
+    Asset savedAsset = assetRepository.save(asset);
+
+    AssetLog log = new AssetLog();
+    log.setAsset(savedAsset);
+    log.setEmployee(currentUser);
+    log.setPatron(null);
+    log.setAction(AssetAction.UPDATED);
+    log.setNotes("Asset record updated with tag: " + asset.getAssetTag());
+
+    logRepository.save(log);
+
 
     return AssetResponseDTO.fromEntity(asset);
   }
