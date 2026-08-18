@@ -1,13 +1,12 @@
 package com.axeld7.inventory_management_system.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -40,13 +39,22 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponseDTO> handleUnhandledException(Exception ex, HttpServletRequest request) {
+  public ResponseEntity<ErrorResponseDTO> handleUnhandledException(
+      Exception ex, HttpServletRequest request) {
 
-    log.error("Unhandled exception caught on path: {}", request.getRequestURI());
+    log.error(
+        "Unhandled exception caught on path: {} - Message: {}",
+        request.getRequestURI(),
+        ex.getMessage(),
+        ex);
 
-    ErrorResponseDTO error = new ErrorResponseDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "An unexpected internal error occured.", request.getRequestURI());
+    ErrorResponseDTO error =
+        new ErrorResponseDTO(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+            "An unexpected internal error occurred.",
+            request.getRequestURI());
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-
   }
 }

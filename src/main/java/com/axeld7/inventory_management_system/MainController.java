@@ -1,5 +1,6 @@
 package com.axeld7.inventory_management_system;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,17 +14,20 @@ public class MainController {
     return "Everyone access";
   }
 
-  @GetMapping("/user/userAccess")
+  @GetMapping("/user/useraccess")
+  @PreAuthorize("hasRole('USER')")
   public String userAccess() {
     return "User Content with JWT";
   }
 
-  @GetMapping("/admin/adminAccess")
+  @GetMapping("/admin/adminaccess")
+  @PreAuthorize("hasRole('ADMIN')")
   public String adminAccess() {
     return "Admin Content with JWT";
   }
 
   @GetMapping("/employee/employeeaccess")
+  @PreAuthorize("hasRole('EMPLOYEE')")
   public String employeeAccess() {
     return "Employee access with jwt";
   }

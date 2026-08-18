@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 import com.axeld7.inventory_management_system.user.User;
 
 @Component("securityAuditAware")
-public class SecurityAuditAware implements AuditorAware<Long>{
+public class SecurityAuditAware implements AuditorAware<User>{
 
     @Override
-    public Optional<Long> getCurrentAuditor() {
+    public Optional<User> getCurrentAuditor() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
@@ -23,7 +23,7 @@ public class SecurityAuditAware implements AuditorAware<Long>{
         }
 
         if (authentication.getPrincipal() instanceof User user) {
-            return Optional.of(user.getId());
+            return Optional.of(user);
         }
 
         return Optional.empty();

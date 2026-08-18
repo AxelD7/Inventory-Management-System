@@ -1,19 +1,6 @@
 package com.axeld7.inventory_management_system.asset.dto;
 
-
 import com.axeld7.inventory_management_system.asset.AssetStatus;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
-public class CreateAssetRequestDTO {
-
-    private String assetTag;
-    private String name;
-    private String brand;
-    private String description;
-    private AssetStatus status;
-
-}
+public record CreateAssetRequestDTO(
+    String assetTag, String name, String brand, String description, AssetStatus status) {}
