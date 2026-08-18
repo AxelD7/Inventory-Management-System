@@ -3,8 +3,6 @@ package com.axeld7.inventory_management_system.asset.dto;
 import com.axeld7.inventory_management_system.asset.Asset;
 import com.axeld7.inventory_management_system.asset.AssetStatus;
 import com.axeld7.inventory_management_system.common.UserSummaryDTO;
-import com.axeld7.inventory_management_system.user.User;
-
 import java.time.Instant;
 
 public record AssetResponseDTO(
@@ -17,7 +15,8 @@ public record AssetResponseDTO(
     Instant createdAt,
     Instant updateAt,
     UserSummaryDTO createdBy,
-    UserSummaryDTO updatedBy) {
+    UserSummaryDTO updatedBy,
+    Integer version) {
   public static AssetResponseDTO fromEntity(Asset asset) {
 
     return new AssetResponseDTO(
@@ -30,8 +29,7 @@ public record AssetResponseDTO(
         asset.getCreatedAt(),
         asset.getUpdatedAt(),
         UserSummaryDTO.toUserSummaryDTO(asset.getCreatedBy()),
-        UserSummaryDTO.toUserSummaryDTO(asset.getUpdatedBy()));
+        UserSummaryDTO.toUserSummaryDTO(asset.getUpdatedBy()),
+        asset.getVersion());
   }
-
-
 }

@@ -50,7 +50,7 @@ public class AssetController {
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 
-  @PutMapping("/assets/{id}")
+  @PutMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<AssetResponseDTO> handleUpdateAsset(
       @Validated @RequestBody UpdateAssetRequestDTO request,

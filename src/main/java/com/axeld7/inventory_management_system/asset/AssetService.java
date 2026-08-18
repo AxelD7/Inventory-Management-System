@@ -15,6 +15,7 @@ import com.axeld7.inventory_management_system.user.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +67,7 @@ public class AssetService {
     return AssetResponseDTO.fromEntity(savedAsset);
   }
 
+  @Transactional
   public AssetResponseDTO updateAsset(UpdateAssetRequestDTO request, User currentUser, Long id) {
 
     Asset asset =
@@ -77,6 +79,10 @@ public class AssetService {
     if (assetRepository.existsByAssetTagAndIdNot(request.assetTag(), id)) {
       throw new DuplicateResourceException(
           "Asset tag " + request.assetTag() + " is already assigned to another asset.");
+    }
+      // Check for version to make sure race coniditons are handled
+    if (!asset.getVersion().equals(request.version())) {
+      throw new ObjectOptimisticLockingFailureException(Asset.class, id);
     }
 
     asset.setName(request.name());
@@ -161,6 +167,7 @@ public class AssetService {
     return CheckoutResponseDTO.fromEntity(circulation);
   }
 
+  @Transactional
   public CheckinResponseDTO checkinAsset(
       CheckinRequestDTO request, User currentUser, Long assetId) {
 
