@@ -51,6 +51,18 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
   }
+    @ExceptionHandler(AssetNotCheckedOutException.class)
+  public ResponseEntity<ErrorResponseDTO> handleAssetNotCheckedOut(
+      AssetNotCheckedOutException ex, HttpServletRequest request) {
+    ErrorResponseDTO error =
+        new ErrorResponseDTO(
+            HttpStatus.CONFLICT.value(),
+            HttpStatus.CONFLICT.getReasonPhrase(),
+            ex.getMessage(),
+            request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+  }
 
   @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
   public ResponseEntity<ErrorResponseDTO> handleOptimisticLockingFailure(

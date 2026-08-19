@@ -8,6 +8,7 @@ import com.axeld7.inventory_management_system.asset.dto.CheckoutResponseDTO;
 import com.axeld7.inventory_management_system.asset.dto.CreateAssetRequestDTO;
 import com.axeld7.inventory_management_system.asset.dto.UpdateAssetRequestDTO;
 import com.axeld7.inventory_management_system.exception.AssetNotAvailableException;
+import com.axeld7.inventory_management_system.exception.AssetNotCheckedOutException;
 import com.axeld7.inventory_management_system.exception.DuplicateResourceException;
 import com.axeld7.inventory_management_system.exception.ResourceNotFoundException;
 import com.axeld7.inventory_management_system.user.User;
@@ -80,7 +81,7 @@ public class AssetService {
       throw new DuplicateResourceException(
           "Asset tag " + request.assetTag() + " is already assigned to another asset.");
     }
-      // Check for version to make sure race coniditons are handled
+    // Check for version to make sure race coniditons are handled
     if (!asset.getVersion().equals(request.version())) {
       throw new ObjectOptimisticLockingFailureException(Asset.class, id);
     }
@@ -121,7 +122,7 @@ public class AssetService {
 
     Asset asset =
         assetRepository
-            .findById(id)
+            .findByIdWithPessimisticLock(id)
             .orElseThrow(() -> new ResourceNotFoundException("Asset not found with ID: " + id));
 
     if (asset.getStatus() != AssetStatus.AVAILABLE) {
@@ -150,9 +151,6 @@ public class AssetService {
     circulation.setStatus(CirculationStatus.ACTIVE);
     circulationRepository.save(circulation);
 
-    asset.setStatus(AssetStatus.UNAVAILABLE);
-    assetRepository.save(asset);
-
     AssetLog log = new AssetLog();
     log.setAction(AssetAction.CHECKOUT);
     log.setAsset(asset);
@@ -162,6 +160,8 @@ public class AssetService {
     log.setNotes("The asset was checked out to a borrower.");
 
     asset.setStatus(AssetStatus.UNAVAILABLE);
+
+    assetRepository.save(asset);
     logRepository.save(log);
 
     return CheckoutResponseDTO.fromEntity(circulation);
@@ -172,7 +172,13 @@ public class AssetService {
       CheckinRequestDTO request, User currentUser, Long assetId) {
 
     AssetCirculation circulation =
-        circulationRepository.findByAssetIdAndStatus(assetId, CirculationStatus.ACTIVE);
+        circulationRepository
+            .findByAssetIdAndStatus(assetId, CirculationStatus.ACTIVE)
+            .orElseThrow(
+                () ->
+                    new AssetNotCheckedOutException(
+                        "The asset was not in circulation and does not need to be checked back"
+                            + " in."));
 
     circulation.setCheckedInBy(currentUser);
     circulation.setReturnedAt(Instant.now());
@@ -180,7 +186,12 @@ public class AssetService {
     circulation.setIsDamaged(request.isDamaged());
     circulation.setNotes(request.notes());
 
-    circulation.getAsset().setStatus(AssetStatus.AVAILABLE);
+    if (circulation.getIsDamaged()) {
+      circulation.getAsset().setStatus(AssetStatus.DAMAGED);
+
+    } else {
+      circulation.getAsset().setStatus(AssetStatus.AVAILABLE);
+    }
 
     AssetLog log = new AssetLog();
     log.setAction(AssetAction.CHECKIN);
