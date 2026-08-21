@@ -7,6 +7,7 @@ import com.axeld7.inventory_management_system.asset.dto.CheckoutRequestDTO;
 import com.axeld7.inventory_management_system.asset.dto.CheckoutResponseDTO;
 import com.axeld7.inventory_management_system.asset.dto.CreateAssetRequestDTO;
 import com.axeld7.inventory_management_system.asset.dto.UpdateAssetRequestDTO;
+import com.axeld7.inventory_management_system.asset.event.AssetLogEvent;
 import com.axeld7.inventory_management_system.exception.AssetNotAvailableException;
 import com.axeld7.inventory_management_system.exception.AssetNotCheckedOutException;
 import com.axeld7.inventory_management_system.exception.DuplicateResourceException;
@@ -16,6 +17,7 @@ import com.axeld7.inventory_management_system.user.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetService {
 
   private final AssetRepository assetRepository;
-  private final AssetLogRepository logRepository;
   private final AssetCirculationRepository circulationRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional(readOnly = true)
   public AssetResponseDTO getAssetById(Long id) {
@@ -40,7 +42,7 @@ public class AssetService {
   }
 
   @Transactional
-  public AssetResponseDTO createAsset(CreateAssetRequestDTO request, User employee) {
+  public AssetResponseDTO createAsset(CreateAssetRequestDTO request, User currentUser) {
 
     if (assetRepository.existsByAssetTag(request.assetTag())) {
       throw new DuplicateResourceException(
@@ -52,18 +54,18 @@ public class AssetService {
     asset.setBrand(request.brand());
     asset.setAssetTag(request.assetTag());
     asset.setDescription(request.description());
-    asset.setStatus(AssetStatus.UNAVAILABLE);
+    asset.setStatus(AssetStatus.AVAILABLE);
 
     Asset savedAsset = assetRepository.save(asset);
 
-    AssetLog log = new AssetLog();
-    log.setAsset(savedAsset);
-    log.setEmployee(employee);
-    log.setPatron(null);
-    log.setAction(AssetAction.CREATED);
-    log.setNotes("Asset record intialized with tag: " + asset.getAssetTag());
-
-    logRepository.save(log);
+    eventPublisher.publishEvent(
+        new AssetLogEvent(
+            savedAsset.getId(),
+            currentUser.getId(),
+            null,
+            AssetAction.CREATED,
+            ("Asset record initialized with tag: " + savedAsset.getAssetTag()),
+            null));
 
     return AssetResponseDTO.fromEntity(savedAsset);
   }
@@ -81,7 +83,8 @@ public class AssetService {
       throw new DuplicateResourceException(
           "Asset tag " + request.assetTag() + " is already assigned to another asset.");
     }
-    // Check for version to make sure race coniditons are handled
+
+    // Check for version to make sure race conditions are handled
     if (!asset.getVersion().equals(request.version())) {
       throw new ObjectOptimisticLockingFailureException(Asset.class, id);
     }
@@ -94,16 +97,16 @@ public class AssetService {
 
     Asset savedAsset = assetRepository.save(asset);
 
-    AssetLog log = new AssetLog();
-    log.setAsset(savedAsset);
-    log.setEmployee(currentUser);
-    log.setPatron(null);
-    log.setAction(AssetAction.UPDATED);
-    log.setNotes("Asset record updated with tag: " + asset.getAssetTag());
+    eventPublisher.publishEvent(
+        new AssetLogEvent(
+            savedAsset.getId(),
+            currentUser.getId(),
+            null,
+            AssetAction.UPDATED,
+            ("Asset record updated with tag: " + savedAsset.getAssetTag()),
+            null));
 
-    logRepository.save(log);
-
-    return AssetResponseDTO.fromEntity(asset);
+    return AssetResponseDTO.fromEntity(savedAsset);
   }
 
   @Transactional
@@ -145,26 +148,26 @@ public class AssetService {
     circulation.setBorrower(borrower);
     circulation.setCheckedOutBy(currentUser);
     circulation.setCheckedInBy(null);
+
     Duration checkoutDuration = Duration.parse(request.checkoutDuration());
     circulation.setDueDate(Instant.now().plus(checkoutDuration));
     circulation.setReturnedAt(null);
     circulation.setStatus(CirculationStatus.ACTIVE);
-    circulationRepository.save(circulation);
 
-    AssetLog log = new AssetLog();
-    log.setAction(AssetAction.CHECKOUT);
-    log.setAsset(asset);
-    log.setCreatedAt(Instant.now());
-    log.setEmployee(currentUser);
-    log.setPatron(borrower);
-    log.setNotes("The asset was checked out to a borrower.");
+    AssetCirculation savedCirculation = circulationRepository.save(circulation);
 
     asset.setStatus(AssetStatus.UNAVAILABLE);
 
-    assetRepository.save(asset);
-    logRepository.save(log);
+    eventPublisher.publishEvent(
+        new AssetLogEvent(
+            asset.getId(),
+            currentUser.getId(),
+            borrower.getId(),
+            AssetAction.CHECKOUT,
+            ("Asset checked out to borrower ID: " + borrower.getId()),
+            null));
 
-    return CheckoutResponseDTO.fromEntity(circulation);
+    return CheckoutResponseDTO.fromEntity(savedCirculation);
   }
 
   @Transactional
@@ -186,23 +189,23 @@ public class AssetService {
     circulation.setIsDamaged(request.isDamaged());
     circulation.setNotes(request.notes());
 
-    if (circulation.getIsDamaged()) {
+    if (Boolean.TRUE.equals(circulation.getIsDamaged())) {
       circulation.getAsset().setStatus(AssetStatus.DAMAGED);
-
     } else {
       circulation.getAsset().setStatus(AssetStatus.AVAILABLE);
     }
 
-    AssetLog log = new AssetLog();
-    log.setAction(AssetAction.CHECKIN);
-    log.setAsset(circulation.getAsset());
-    log.setCreatedAt(Instant.now());
-    log.setEmployee(currentUser);
-    log.setPatron(circulation.getBorrower());
-    log.setNotes("The asset was checked back in from a borrower.");
+    AssetCirculation updatedCirculation = circulationRepository.save(circulation);
 
-    logRepository.save(log);
+    eventPublisher.publishEvent(
+        new AssetLogEvent(
+            circulation.getAsset().getId(),
+            currentUser.getId(),
+            circulation.getBorrower().getId(),
+            AssetAction.CHECKIN,
+            ("Asset checked in by user ID: " + currentUser.getId()),
+            null));
 
-    return CheckinResponseDTO.fromEntity(circulation);
+    return CheckinResponseDTO.fromEntity(updatedCirculation);
   }
 }
