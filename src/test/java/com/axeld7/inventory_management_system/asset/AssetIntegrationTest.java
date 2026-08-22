@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.axeld7.inventory_management_system.user.User;
 import com.axeld7.inventory_management_system.user.UserRepository;
 import com.axeld7.inventory_management_system.user.UserRoles;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.*;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -26,11 +24,9 @@ public class AssetIntegrationTest {
   @Container @ServiceConnection
   static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16-alpine");
 
-  @Autowired private MockMvc mockMvc;
   @Autowired private UserRepository userRepository;
   @Autowired private AssetRepository assetRepository;
   @Autowired private AssetCirculationRepository circulationRepository;
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
   void setUp() {

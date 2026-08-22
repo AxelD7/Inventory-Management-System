@@ -17,6 +17,8 @@ import com.axeld7.inventory_management_system.user.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class AssetService {
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
 
+  @Cacheable(value = "assets", key = "#id")
   @Transactional(readOnly = true)
   public AssetResponseDTO getAssetById(Long id) {
     Asset asset =
@@ -42,6 +45,7 @@ public class AssetService {
   }
 
   @Transactional
+  @CacheEvict(value = "assets", allEntries = true)
   public AssetResponseDTO createAsset(CreateAssetRequestDTO request, User currentUser) {
 
     if (assetRepository.existsByAssetTag(request.assetTag())) {
@@ -70,6 +74,7 @@ public class AssetService {
     return AssetResponseDTO.fromEntity(savedAsset);
   }
 
+  @CacheEvict(value = "assets", key = "#id")
   @Transactional
   public AssetResponseDTO updateAsset(UpdateAssetRequestDTO request, User currentUser, Long id) {
 
@@ -84,7 +89,6 @@ public class AssetService {
           "Asset tag " + request.assetTag() + " is already assigned to another asset.");
     }
 
-    // Check for version to make sure race conditions are handled
     if (!asset.getVersion().equals(request.version())) {
       throw new ObjectOptimisticLockingFailureException(Asset.class, id);
     }
@@ -120,6 +124,7 @@ public class AssetService {
     assetRepository.delete(asset);
   }
 
+  @CacheEvict(value = "assets", key = "#id")
   @Transactional
   public CheckoutResponseDTO checkoutAsset(CheckoutRequestDTO request, User currentUser, Long id) {
 
@@ -170,6 +175,7 @@ public class AssetService {
     return CheckoutResponseDTO.fromEntity(savedCirculation);
   }
 
+  @CacheEvict(value = "assets", key = "#assetId")
   @Transactional
   public CheckinResponseDTO checkinAsset(
       CheckinRequestDTO request, User currentUser, Long assetId) {
