@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -24,6 +25,19 @@ public class GlobalExceptionHandler {
             request.getRequestURI());
 
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ErrorResponseDTO> handleBadCredentials(
+      BadCredentialsException ex, HttpServletRequest request) {
+
+    ErrorResponseDTO error =
+        new ErrorResponseDTO(
+            HttpStatus.UNAUTHORIZED.value(),
+            HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+            ex.getMessage(),
+            request.getRequestURI());
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
   }
 
   @ExceptionHandler(DuplicateResourceException.class)
@@ -51,7 +65,8 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
   }
-    @ExceptionHandler(AssetNotCheckedOutException.class)
+
+  @ExceptionHandler(AssetNotCheckedOutException.class)
   public ResponseEntity<ErrorResponseDTO> handleAssetNotCheckedOut(
       AssetNotCheckedOutException ex, HttpServletRequest request) {
     ErrorResponseDTO error =

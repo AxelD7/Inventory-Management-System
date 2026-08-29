@@ -23,6 +23,9 @@ public class JwtUtil {
   @Value("${jwt.expiration}")
   private int jwtExpirationMs;
 
+  @Value("${jwt.refresh-expiration}")
+  private int jwtRefreshExpirationMs;
+
   private SecretKey key;
 
   @PostConstruct
@@ -30,7 +33,7 @@ public class JwtUtil {
     this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
   }
 
-  public String generateToken(String email) {
+  public String generateAccessToken(String email) {
 
     return Jwts.builder()
         .subject(email)
@@ -39,6 +42,18 @@ public class JwtUtil {
         .signWith(key)
         .compact();
   }
+
+
+  public String generateRefreshToken(String email) {
+
+    return Jwts.builder()
+        .subject(email)
+        .issuedAt(new Date())
+        .expiration(new Date(new Date().getTime() + jwtRefreshExpirationMs))
+        .signWith(key)
+        .compact();
+  }
+
 
   public String getUserFromToken(String token) {
     return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
