@@ -77,6 +77,6 @@ public class AuthService {
     newUser = userRepository.save(newUser);
 
     return new UserSummaryDTO(
-        newUser.getId(), newUser.getEmail(), newUser.getFirstName(), newUser.getLastName());
+        newUser.getId(), newUser.getEmail(), newUser.getFirstName(), newUser.getLastName(), newUser.getRole());
   }
 }
