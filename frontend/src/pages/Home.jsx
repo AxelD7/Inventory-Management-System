@@ -1,6 +1,5 @@
 import { useAuth } from "../context/AuthContext";
 
-
 function Home() {
   const { user, logout } = useAuth();
 
@@ -10,7 +9,13 @@ function Home() {
       <div className="bg-slate-100 p-4 rounded-lg border mb-6">
         <h2 className="text-xl font-semibold mb-2">Logged-in User Profile:</h2>
         <p>
-          <strong>Email:</strong> {user || "Unknown"}
+          <strong>Email:</strong> {user?.email || "Unknown"}
+        </p>
+        <p>
+          <strong>Firstname:</strong> {user?.firstName || "Unknown"}
+        </p>
+        <p>
+          <strong>LastName:</strong> {user?.lastName || "Unknown"}
         </p>
       </div>
       <button
