@@ -1,6 +1,8 @@
 package com.axeld7.inventory_management_system.asset;
 
 import com.axeld7.inventory_management_system.asset.dto.AssetResponseDTO;
+import com.axeld7.inventory_management_system.asset.dto.AssetStatsDTO;
+import com.axeld7.inventory_management_system.asset.dto.AssetSummaryDTO;
 import com.axeld7.inventory_management_system.asset.dto.CheckinRequestDTO;
 import com.axeld7.inventory_management_system.asset.dto.CheckinResponseDTO;
 import com.axeld7.inventory_management_system.asset.dto.CheckoutRequestDTO;
@@ -20,6 +22,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +46,17 @@ public class AssetService {
             .orElseThrow(() -> new ResourceNotFoundException("Asset not found with ID: " + id));
 
     return AssetResponseDTO.fromEntity(asset);
+  }
+
+  @Transactional(readOnly = true)
+  public AssetStatsDTO getAssetStats() {
+    return assetRepository.getAssetStats();
+  }
+
+  @Transactional(readOnly = true)
+  public Page<AssetSummaryDTO> findAssetsPaged(String query, Pageable pageable) {
+    String searchQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : "";
+    return assetRepository.findBySearch(searchQuery, pageable);
   }
 
   @Transactional
@@ -161,7 +176,7 @@ public class AssetService {
 
     AssetCirculation savedCirculation = circulationRepository.save(circulation);
 
-    asset.setStatus(AssetStatus.UNAVAILABLE);
+    asset.setStatus(AssetStatus.CHECKED_OUT);
 
     eventPublisher.publishEvent(
         new AssetLogEvent(

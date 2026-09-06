@@ -4,6 +4,7 @@ import com.axeld7.inventory_management_system.auth.AuthEntryPointJwt;
 import com.axeld7.inventory_management_system.auth.AuthTokenFilter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   @Autowired private AuthEntryPointJwt unauthorizedHandler;
+
+  @Value("${cors.allowed-origins}")
+  private String allowedOrigins;
 
   @Bean
   public AuthTokenFilter authenticationTokenFilter() {
@@ -63,16 +67,19 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOrigins(List.of("http://localhost:5173"));
+    config.setAllowedOrigins(List.of(allowedOrigins));
 
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
     config.setAllowedHeaders(List.of("*"));
 
+    config.setExposedHeaders(List.of("Set-Cookie"));
+
     config.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    config.setMaxAge(3600L);
 
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
     return source;
   }

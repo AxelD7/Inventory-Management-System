@@ -7,7 +7,7 @@ import {
 } from "react";
 import { axiosClient } from "../api/axiosClient";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(null);
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const response = await axiosClient.get("/auth/refresh");
+        const response = await axiosClient.post("/auth/refresh");
         setAccessToken(response.data.accessToken);
         setUser(response.data.user);
       } catch (error) {
@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     };
+
     initializeAuth();
   }, []);
 
@@ -35,7 +36,6 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
-
     setAccessToken(response.data.accessToken);
     setUser(response.data.user);
     return response.data;
@@ -44,21 +44,22 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await axiosClient.post("/auth/logout");
+    } catch (err) {
+      console.error("Logout error on backend:", err);
     } finally {
       setAccessToken(null);
       setUser(null);
-      alert("logout successful")
     }
   };
 
   useLayoutEffect(() => {
     const authInterceptor = axiosClient.interceptors.request.use((config) => {
-      config.headers.Authorization =
-        !config._retry && accessToken
-          ? `Bearer ${accessToken}`
-          : config.headers.Authorization;
+      if (accessToken && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
       return config;
     });
+
     return () => {
       axiosClient.interceptors.request.eject(authInterceptor);
     };
@@ -72,15 +73,15 @@ export const AuthProvider = ({ children }) => {
 
         if (
           error.response?.status === 401 &&
-          !originalRequest._retry &&
-          !originalRequest.url.includes("/auth/signin") &&
-          !originalRequest.url.includes("/auth/refresh") &&
-          !originalRequest.url.includes("/auth/logout")
+          !originalRequest?._retry &&
+          !originalRequest?.url?.includes("/auth/signin") &&
+          !originalRequest?.url?.includes("/auth/refresh") &&
+          !originalRequest?.url?.includes("/auth/logout")
         ) {
           originalRequest._retry = true;
 
           try {
-            const response = await axiosClient.get("/auth/refresh");
+            const response = await axiosClient.post("/auth/refresh");
             const newAccessToken = response.data.accessToken;
 
             setAccessToken(newAccessToken);
@@ -103,13 +104,34 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-600 font-medium text-sm">
+        Loading app...
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider
-      value={{ accessToken, setAccessToken, user, login, logout, loading }}
+      value={{
+        accessToken,
+        setAccessToken,
+        user,
+        login,
+        logout,
+        loading,
+      }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an <AuthProvider>");
+  }
+  return context;
+};
