@@ -3,6 +3,7 @@ import { axiosClient } from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 import KpiCard from "../components/KpiCard";
 import AssetCatalog from "../components/dashboard/AssetCatalog";
+import PatronLookup from "../components/dashboard/PatronLookup";
 
 function Dashboard() {
   const { accessToken, loading: authLoading } = useAuth();
@@ -29,8 +30,8 @@ function Dashboard() {
         if (response.data) {
           setCounts({
             totalCount: response.data.totalCount,
-            availableCount: response.data.availableCount ,
-            checkedOutCount: response.data.checkedOutCount ,
+            availableCount: response.data.availableCount,
+            checkedOutCount: response.data.checkedOutCount,
             damagedCount: response.data.damagedCount,
           });
         }
@@ -77,7 +78,10 @@ function Dashboard() {
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-slate-500 hover:text-slate-700"
             }`}
-            onClick={() => setActiveTab("CATALOG")}
+            onClick={() => {
+              setActiveTab("CATALOG");
+              setSearchQuery("");
+            }}
           >
             Available Catalog
           </button>
@@ -87,7 +91,10 @@ function Dashboard() {
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-slate-500 hover:text-slate-700"
             }`}
-            onClick={() => setActiveTab("PATRON-LOOKUP")}
+            onClick={() => {
+              setActiveTab("PATRON-LOOKUP");
+              setSearchQuery("");
+            }}
           >
             Patron Look Up
           </button>
@@ -97,7 +104,11 @@ function Dashboard() {
           <input
             className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             type="text"
-            placeholder="Search by tag, name or brand"
+            placeholder={
+              activeTab === "CATALOG"
+                ? "Search by tag, name or brand"
+                : "Search by name or email"
+            }
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -108,13 +119,9 @@ function Dashboard() {
 
       <div className="workspace-content">
         {activeTab === "CATALOG" ? (
-          <AssetCatalog
-            query={searchQuery}
-          />
+          <AssetCatalog query={searchQuery} />
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 shadow-sm">
-            Patron lookup workspace content
-          </div>
+          <PatronLookup query={searchQuery} />
         )}
       </div>
     </div>

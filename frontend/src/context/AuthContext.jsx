@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
 } from "react";
 import { axiosClient } from "../api/axiosClient";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(null);
 
@@ -13,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -49,6 +51,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setAccessToken(null);
       setUser(null);
+      navigate("/signin");
     }
   };
 
