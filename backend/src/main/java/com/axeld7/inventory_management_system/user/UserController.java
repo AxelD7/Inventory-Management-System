@@ -1,7 +1,12 @@
 package com.axeld7.inventory_management_system.user;
 
+import com.axeld7.inventory_management_system.asset.CirculationStatus;
+import com.axeld7.inventory_management_system.asset.dto.AssetSummaryDTO;
 import com.axeld7.inventory_management_system.common.UserSummaryDTO;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +44,16 @@ public class UserController {
   public ResponseEntity<UserSummaryDTO> getUserInfo(@PathVariable Long id) {
 
     UserSummaryDTO response = userService.getUserSummary(id);
+
+    return ResponseEntity.status(HttpStatus.OK).body(response);
+  }
+
+  @GetMapping("/{id}/circulations")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN')")
+  public ResponseEntity<List<AssetSummaryDTO>> getUserCirculations(
+      @PathVariable Long id, @RequestParam CirculationStatus status) {
+
+    List<AssetSummaryDTO> response = userService.getUserCirculations(id, status);
 
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
