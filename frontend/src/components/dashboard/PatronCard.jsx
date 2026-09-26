@@ -1,9 +1,11 @@
 import { useState } from "react";
 import noImg from "../../assets/no-image.svg";
 import CheckoutModal from "../modals/CheckoutModal";
+import InspectUserModal from "../modals/InspectUserModal";
 
 function PatronCard({ patron, onSelectPatron, onCheckoutSuccess }) {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isInspectUserModalOpen, setIsInspectUserModalOpen] = useState(false);
 
   if (!patron) return null;
 
@@ -43,7 +45,17 @@ function PatronCard({ patron, onSelectPatron, onCheckoutSuccess }) {
           </div>
         </div>
 
-        <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-end">
+        <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsInspectUserModalOpen(true);
+            }}
+            className="bg-gray-500 hover:bg-gray-700 text-white text-[10px] font-semibold px-2 py-1 rounded transition shadow-sm"
+          >
+            View User
+          </button>
           <button
             type="button"
             onClick={(event) => {
@@ -56,6 +68,11 @@ function PatronCard({ patron, onSelectPatron, onCheckoutSuccess }) {
           </button>
         </div>
       </div>
+      <InspectUserModal
+        selectedUser={patron}
+        isOpen={isInspectUserModalOpen}
+        onClose={() => setIsInspectUserModalOpen(false)}
+      />
 
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
