@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { axiosClient } from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 import KpiCard from "../components/KpiCard";
@@ -20,30 +20,29 @@ function Dashboard() {
 
   const [kpiLoading, setKpiLoading] = useState(true);
 
+  const refreshAssetStats = useCallback(async () => {
+    try {
+      const response = await axiosClient.get("/assets/stats");
+      if (response.data) {
+        setCounts({
+          totalCount: response.data.totalCount,
+          availableCount: response.data.availableCount,
+          checkedOutCount: response.data.checkedOutCount,
+          damagedCount: response.data.damagedCount,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load KPI stats:", err);
+    } finally {
+      setKpiLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (authLoading || !accessToken) return;
 
-    const fetchAssetKpi = async () => {
-      try {
-        setKpiLoading(true);
-        const response = await axiosClient.get("/assets/stats");
-        if (response.data) {
-          setCounts({
-            totalCount: response.data.totalCount,
-            availableCount: response.data.availableCount,
-            checkedOutCount: response.data.checkedOutCount,
-            damagedCount: response.data.damagedCount,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load KPI stats:", err);
-      } finally {
-        setKpiLoading(false);
-      }
-    };
-
-    fetchAssetKpi();
-  }, [accessToken, authLoading]);
+    refreshAssetStats();
+  }, [accessToken, authLoading, refreshAssetStats]);
 
   return (
     <div className="dashboard max-w-7xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
@@ -119,7 +118,10 @@ function Dashboard() {
 
       <div className="workspace-content">
         {activeTab === "CATALOG" ? (
-          <AssetCatalog query={searchQuery} />
+          <AssetCatalog
+            query={searchQuery}
+            onAssetCirculationChange={refreshAssetStats}
+          />
         ) : (
           <PatronLookup query={searchQuery} />
         )}
