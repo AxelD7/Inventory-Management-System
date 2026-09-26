@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { axiosClient } from "../../api/axiosClient";
+import { useNotifications } from "../../context/useNotifications";
 
 const returnTimeOptions = [
   { label: "4 hours", hours: 4 },
@@ -21,6 +22,7 @@ function CheckoutModal({
   onClose,
   onCheckoutSuccess,
 }) {
+  const { notifySuccess, notifyError } = useNotifications();
   const [assetSearch, setAssetSearch] = useState("");
   const [borrowerSearch, setBorrowerSearch] = useState("");
   const [assetResults, setAssetResults] = useState([]);
@@ -129,11 +131,13 @@ function CheckoutModal({
       });
 
       onCheckoutSuccess?.();
+      notifySuccess("Asset checked out successfully.");
       onClose();
     } catch (error) {
       const message =
         error?.response?.data?.message || "Unable to check out this asset.";
       setCheckoutError(message);
+      notifyError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -204,13 +208,29 @@ function CheckoutModal({
                       <button
                         key={asset.id || asset.assetId}
                         type="button"
+                        disabled={asset.status !== "AVAILABLE"}
                         onClick={() => {
                           setSelectedAsset(asset);
                           setAssetResults([]);
                         }}
-                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        className={`flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm last:border-b-0 ${
+                          asset.status === "AVAILABLE"
+                            ? "hover:bg-slate-50"
+                            : "cursor-not-allowed bg-slate-50 text-slate-400"
+                        }`}
                       >
-                        {asset.name} ({asset.assetTag || asset.id})
+                        <span className="truncate">
+                          {asset.name} ({asset.assetTag || asset.id})
+                        </span>
+                        <span
+                          className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${
+                            asset.status === "AVAILABLE"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-slate-200 text-slate-600"
+                          }`}
+                        >
+                          {asset.status?.replaceAll("_", " ") || "Status unknown"}
+                        </span>
                       </button>
                     ))}
                   </div>

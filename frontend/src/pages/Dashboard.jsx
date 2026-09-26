@@ -123,7 +123,10 @@ function Dashboard() {
             onAssetCirculationChange={refreshAssetStats}
           />
         ) : (
-          <PatronLookup query={searchQuery} />
+          <PatronLookup
+            query={searchQuery}
+            onCheckoutSuccess={refreshAssetStats}
+          />
         )}
       </div>
     </div>

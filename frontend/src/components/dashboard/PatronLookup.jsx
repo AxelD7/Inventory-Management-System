@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { axiosClient } from "../../api/axiosClient";
 import { useAuth } from "../../context/AuthContext";
 
-function PatronLookup({ query = "" }) {
+function PatronLookup({ query = "", onCheckoutSuccess }) {
   const { accessToken, loading: authLoading } = useAuth();
   const [page, setCurrentPage] = useState(0);
 
@@ -66,7 +66,11 @@ function PatronLookup({ query = "" }) {
           <div>Loading</div>
         ) : patrons.length > 0 ? (
           patrons.map((patron) => (
-            <PatronCard key={patron.id || patron.email} patron={patron} />
+            <PatronCard
+              key={patron.id || patron.email}
+              patron={patron}
+              onCheckoutSuccess={onCheckoutSuccess}
+            />
           ))
         ) : (
           <div className="col-span-full border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm">

@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+.success-toast {
+  animation: success-toast-drop 250ms ease-out both;
+}
+
+@keyframes success-toast-drop {
+  from {
+    opacity: 0;
+    margin-top: -1.5rem;
+  }
+  to {
+    opacity: 1;
+    margin-top: 0;
+  }
+}
