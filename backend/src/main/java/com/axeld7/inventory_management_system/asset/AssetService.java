@@ -39,6 +39,13 @@ public class AssetService {
 
   @Cacheable(value = "assets", key = "#id")
   @Transactional(readOnly = true)
+  /**
+   * Loads an asset by ID and maps it to the API response representation.
+   *
+   * @param id unique database identifier of the asset
+   * @return the asset response
+   * @throws ResourceNotFoundException if no asset has the requested ID
+   */
   public AssetResponseDTO getAssetById(Long id) {
     Asset asset =
         assetRepository
@@ -49,11 +56,19 @@ public class AssetService {
   }
 
   @Transactional(readOnly = true)
+  /** Returns aggregate asset counts grouped by availability status. */
   public AssetStatsDTO getAssetStats() {
     return assetRepository.getAssetStats();
   }
 
   @Transactional(readOnly = true)
+  /**
+   * Searches assets using the supplied text and repository pagination rules.
+   *
+   * @param query optional text matched against asset fields
+   * @param pageable page, size, and sort requested by the caller
+   * @return a page of asset summaries
+   */
   public Page<AssetSummaryDTO> findAssetsPaged(String query, Pageable pageable) {
     String searchQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : "";
     return assetRepository.findBySearch(searchQuery, pageable);
@@ -61,6 +76,14 @@ public class AssetService {
 
   @Transactional
   @CacheEvict(value = "assets", allEntries = true)
+  /**
+   * Creates an available asset and publishes its audit event.
+   *
+   * @param request asset fields supplied by an administrator
+   * @param currentUser authenticated user responsible for the change
+   * @return the persisted asset response
+   * @throws DuplicateResourceException if the asset tag is already assigned
+   */
   public AssetResponseDTO createAsset(CreateAssetRequestDTO request, User currentUser) {
 
     if (assetRepository.existsByAssetTag(request.assetTag())) {
@@ -91,6 +114,17 @@ public class AssetService {
 
   @CacheEvict(value = "assets", key = "#id")
   @Transactional
+  /**
+   * Updates an asset and records the change for auditing.
+   *
+   * @param request replacement asset fields and the version last read by the caller
+   * @param currentUser authenticated user responsible for the change
+   * @param id unique database identifier of the asset
+   * @return the updated asset response
+   * @throws ResourceNotFoundException if no asset has the requested ID
+   * @throws DuplicateResourceException if another asset uses the requested tag
+   * @throws ObjectOptimisticLockingFailureException if the asset version is stale
+   */
   public AssetResponseDTO updateAsset(UpdateAssetRequestDTO request, User currentUser, Long id) {
 
     Asset asset =
@@ -129,6 +163,12 @@ public class AssetService {
   }
 
   @Transactional
+  /**
+   * Deletes an asset by ID.
+   *
+   * @param id unique database identifier of the asset
+   * @throws ResourceNotFoundException if no asset has the requested ID
+   */
   public void deleteAsset(Long id) {
 
     Asset asset =
@@ -141,13 +181,28 @@ public class AssetService {
 
   @CacheEvict(value = "assets", key = "#id")
   @Transactional
+  /**
+   * Executes a checkout workflow for an available asset.
+   * <p>
+   * Locks the asset while validating availability, creates an active circulation,
+   * and publishes an append-only audit event.
+   *
+   * @param request borrower ID and ISO-8601 checkout duration
+   * @param currentUser authenticated staff member processing the transaction
+   * @param id unique database identifier of the target asset
+   * @return the newly created circulation response
+   * @throws ResourceNotFoundException if the asset or borrower cannot be found
+   * @throws AssetNotAvailableException if the asset is not available
+   */
   public CheckoutResponseDTO checkoutAsset(CheckoutRequestDTO request, User currentUser, Long id) {
 
+    // Pessimistic locking serializes competing checkouts for the same asset.
     Asset asset =
         assetRepository
             .findByIdWithPessimisticLock(id)
             .orElseThrow(() -> new ResourceNotFoundException("Asset not found with ID: " + id));
 
+    // Reject the transaction before creating a circulation to preserve one active checkout.
     if (asset.getStatus() != AssetStatus.AVAILABLE) {
       throw new AssetNotAvailableException(
           "Asset "
@@ -192,6 +247,15 @@ public class AssetService {
 
   @CacheEvict(value = "assets", key = "#assetId")
   @Transactional
+  /**
+   * Closes the active circulation for an asset and restores its operational status.
+   *
+   * @param request return condition and optional notes
+   * @param currentUser authenticated staff member processing the return
+   * @param assetId unique database identifier of the returned asset
+   * @return the updated circulation response
+   * @throws AssetNotCheckedOutException if the asset has no active circulation
+   */
   public CheckinResponseDTO checkinAsset(
       CheckinRequestDTO request, User currentUser, Long assetId) {
 

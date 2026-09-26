@@ -20,12 +20,26 @@ public class UserService {
   private AssetCirculationRepository circulationRepository;
 
   @Transactional(readOnly = true)
+  /**
+   * Searches users with repository pagination.
+   *
+   * @param query optional text used by the repository search
+   * @param pageable page and sorting options
+   * @return a page of user summaries
+   */
   public Page<UserSummaryDTO> findPagedUsers(String query, Pageable pageable) {
     Page<UserSummaryDTO> pages = userRepository.findBySearch(query == null ? "" : query, pageable);
     return pages;
   }
 
   @Transactional(readOnly = true)
+  /**
+   * Loads a user and exposes only the fields safe for summary responses.
+   *
+   * @param userId unique database identifier of the user
+   * @return the user's summary
+   * @throws ResourceNotFoundException if no user has the requested ID
+   */
   public UserSummaryDTO getUserSummary(Long userId) {
     User user =
         userRepository
@@ -40,6 +54,14 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
+  /**
+   * Finds assets borrowed by a user in a given circulation state.
+   *
+   * @param id unique database identifier of the borrower
+   * @param status circulation state to filter by
+   * @return matching asset summaries
+   * @throws ResourceNotFoundException if no user has the requested ID
+   */
   public List<AssetSummaryDTO> getUserCirculations(Long id, CirculationStatus status) {
     userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
