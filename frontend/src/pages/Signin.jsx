@@ -53,6 +53,7 @@ function Signin() {
           <input
             className="password w-full mb-2 border-2 rounded-md border-slate-600 bg-gray-200"
             placeholder="Password"
+            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           ></input>
