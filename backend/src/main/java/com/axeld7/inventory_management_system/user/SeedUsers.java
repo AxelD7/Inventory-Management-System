@@ -45,7 +45,7 @@ public class SeedUsers implements ApplicationRunner {
       throw new IllegalStateException("Both seed email and password must be configured.");
     }
 
-    if (!userRepository.existsByEmail(email)) {
+    if (!userRepository.existsByEmailIgnoreCase(email)) {
       User user = new User();
       user.setEmail(email);
       user.setFirstName(firstName);

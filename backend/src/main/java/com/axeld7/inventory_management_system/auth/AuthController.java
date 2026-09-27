@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +36,7 @@ public class AuthController {
         ResponseCookie.from("refreshToken", refreshtoken)
             .httpOnly(true)
             .secure(true)
-            .sameSite("Strict")
+            .sameSite("Lax")
             .path("/api/v1/auth/")
             .maxAge(Duration.ofDays(7))
             .build();
@@ -66,7 +67,7 @@ public class AuthController {
         ResponseCookie.from("refreshToken", "")
             .httpOnly(true)
             .secure(true)
-            .sameSite("Strict")
+            .sameSite("Lax")
             .path("/api/v1/auth/")
             .maxAge(0)
             .build();
@@ -79,6 +80,7 @@ public class AuthController {
   }
 
   @PostMapping("/signup")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<UserSummaryDTO> registerUser(@RequestBody RegisterRequestDTO request) {
 
     UserSummaryDTO resp = authService.registerUser(request);

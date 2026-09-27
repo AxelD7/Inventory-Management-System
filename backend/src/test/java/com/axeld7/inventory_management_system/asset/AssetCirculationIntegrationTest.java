@@ -76,9 +76,9 @@ public class AssetCirculationIntegrationTest {
   @Test
   void testAssetCheckout_Success() throws Exception {
 
-    User admin = userRepository.findByEmail("jackadmin@gmail.com");
-    User employee = userRepository.findByEmail("jackemployee@gmail.com");
-    User borrower = userRepository.findByEmail("joeborrower@gmail.com");
+    User admin = userRepository.findByEmailIgnoreCase("jackadmin@gmail.com");
+    User employee = userRepository.findByEmailIgnoreCase("jackemployee@gmail.com");
+    User borrower = userRepository.findByEmailIgnoreCase("joeborrower@gmail.com");
 
     Asset asset = new Asset();
     asset.setAssetTag("LAPTOP-001");
@@ -112,9 +112,9 @@ public class AssetCirculationIntegrationTest {
   @Test
   void testAssetCheckIn_Success() throws Exception {
 
-    User admin = userRepository.findByEmail("jackadmin@gmail.com");
-    User employee = userRepository.findByEmail("jackemployee@gmail.com");
-    User borrower = userRepository.findByEmail("joeborrower@gmail.com");
+    User admin = userRepository.findByEmailIgnoreCase("jackadmin@gmail.com");
+    User employee = userRepository.findByEmailIgnoreCase("jackemployee@gmail.com");
+    User borrower = userRepository.findByEmailIgnoreCase("joeborrower@gmail.com");
 
     Asset asset = new Asset();
     asset.setAssetTag("LAPTOP-002");

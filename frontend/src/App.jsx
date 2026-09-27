@@ -2,9 +2,14 @@ import Dashboard from "./pages/Dashboard";
 import Signin from "./pages/Signin";
 import Navbar from "./components/Navbar";
 
-import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { Navigate, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationProvider";
+
+function HomeRoute() {
+  const { accessToken } = useAuth();
+  return accessToken ? <Dashboard /> : <Navigate to="/signin" replace />;
+}
 
 function App() {
   return (
@@ -14,7 +19,7 @@ function App() {
           <Navbar />
           <div className="w-full flex-1 flex flex-col items-center">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<HomeRoute />} />
               <Route path="/signin" element={<Signin />} />
             </Routes>
           </div>

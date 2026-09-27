@@ -36,7 +36,7 @@ function Signin() {
     <div className="login border-2 max-w-md rounded-xl bg-white border-slate-200 p-6 shadow-sm flex-col">
       <div className="login-title mb-5">
         <h2 className="font-bold text-2xl text-center mb-3">
-          Asset Management System
+          Inventory Management System
         </h2>
         <hr />
       </div>

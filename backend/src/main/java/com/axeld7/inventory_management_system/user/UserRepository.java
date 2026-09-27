@@ -11,9 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-  User findByEmail(String email);
+  User findByEmailIgnoreCase(String email);
 
-  boolean existsByEmail(String email);
+  boolean existsByEmailIgnoreCase(String email);
 
   @Query(
       "SELECT new com.axeld7.inventory_management_system.common.UserSummaryDTO(u.id,"

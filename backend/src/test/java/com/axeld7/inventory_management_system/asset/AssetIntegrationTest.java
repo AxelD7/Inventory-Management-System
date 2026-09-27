@@ -61,7 +61,7 @@ public class AssetIntegrationTest {
 
   @Test
   void optimisticLocking_FailsOnConcurrentUpdate() {
-    User testUser = userRepository.findByEmail("jackadmin@gmail.com");
+    User testUser = userRepository.findByEmailIgnoreCase("jackadmin@gmail.com");
 
     Asset asset = new Asset();
     asset.setName("Dell XPS 15");

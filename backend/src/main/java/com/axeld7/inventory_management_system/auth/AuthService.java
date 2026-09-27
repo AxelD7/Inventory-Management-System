@@ -8,6 +8,7 @@ import com.axeld7.inventory_management_system.exception.DuplicateResourceExcepti
 import com.axeld7.inventory_management_system.user.User;
 import com.axeld7.inventory_management_system.user.UserRepository;
 import com.axeld7.inventory_management_system.user.UserRoles;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,7 +52,7 @@ public class AuthService {
 
   public LoginResponseDTO refreshAccessToken(String userEmail) {
 
-    User authenticatedUser = userRepository.findByEmail(userEmail);
+    User authenticatedUser = userRepository.findByEmailIgnoreCase(userEmail);
 
     String token = jwtUtil.generateAccessToken(authenticatedUser.getEmail());
 
@@ -62,7 +63,8 @@ public class AuthService {
   }
 
   public UserSummaryDTO registerUser(RegisterRequestDTO request) {
-    if (userRepository.existsByEmail(request.getEmail())) {
+    String email = request.getEmail().toLowerCase(Locale.ROOT);
+    if (userRepository.existsByEmailIgnoreCase(email)) {
       throw new DuplicateResourceException("User with that email already exists.");
     }
     User newUser =
@@ -70,13 +72,17 @@ public class AuthService {
             null,
             request.getFirstName(),
             request.getLastName(),
-            request.getEmail(),
+            email,
             UserRoles.USER,
             passwordEncoder.encode(request.getPassword()));
 
     newUser = userRepository.save(newUser);
 
     return new UserSummaryDTO(
-        newUser.getId(), newUser.getEmail(), newUser.getFirstName(), newUser.getLastName(), newUser.getRole());
+        newUser.getId(),
+        newUser.getEmail(),
+        newUser.getFirstName(),
+        newUser.getLastName(),
+        newUser.getRole());
   }
 }
