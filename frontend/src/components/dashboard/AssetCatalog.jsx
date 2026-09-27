@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { axiosClient } from "../../api/axiosClient";
 import { useAuth } from "../../context/AuthContext";
 import AssetCard from "./AssetCard";
@@ -6,6 +6,7 @@ import AssetCard from "./AssetCard";
 function AssetCatalog({ query = "", onAssetCirculationChange }) {
   const { accessToken, loading: authLoading } = useAuth();
   const [page, setCurrentPage] = useState(0);
+  const previousQuery = useRef(query);
 
   const [assets, setAssets] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -16,6 +17,14 @@ function AssetCatalog({ query = "", onAssetCirculationChange }) {
 
   useEffect(() => {
     if (authLoading || !accessToken) return;
+
+    if (previousQuery.current !== query) {
+      previousQuery.current = query;
+      if (page !== 0) {
+        setCurrentPage(0);
+        return;
+      }
+    }
 
     const controller = new AbortController();
 
@@ -53,6 +62,7 @@ function AssetCatalog({ query = "", onAssetCirculationChange }) {
         }
       } finally {
         setLoading(false);
+
       }
     };
 
