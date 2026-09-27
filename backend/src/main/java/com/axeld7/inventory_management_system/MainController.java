@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class MainController {
 
+  @GetMapping("/health")
+  public String health() {
+    return "Server is up";
+  }
+
   @GetMapping("/all/welcome")
   public String allAccess() {
     return "Everyone access";
